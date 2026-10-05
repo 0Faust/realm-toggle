@@ -1,11 +1,11 @@
 {
   "id": "realm-toggle",
   "name": "Смена измерения",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "0Faust",
   "description": {
-    "ru": "Мгновенное переключение между раем и адом одной кнопкой на панели. Полная анимация перехода: свет, тьма, треск.",
-    "en": "Instantly toggle between heaven and hell with one button on the bar. Full swap animation: light, dark, cracks."
+    "ru": "Переключение между раем и адом после первого полноценного прохождения ада. Возврат в рай не увеличивает счётчик возвращений AngelOS.",
+    "en": "Toggle between heaven and hell after the first completed Hell passage. Returning to heaven does not increase the AngelOS return counter."
   },
   "icon": "starSparkle",
   "enabledByDefault": true,

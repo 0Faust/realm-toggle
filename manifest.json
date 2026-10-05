@@ -1,0 +1,25 @@
+{
+  "id": "realm-toggle",
+  "name": "Смена измерения",
+  "version": "1.0.0",
+  "author": "0Faust",
+  "description": {
+    "ru": "Мгновенное переключение между раем и адом одной кнопкой на панели. Полная анимация перехода: свет, тьма, треск.",
+    "en": "Instantly toggle between heaven and hell with one button on the bar. Full swap animation: light, dark, cracks."
+  },
+  "icon": "starSparkle",
+  "enabledByDefault": true,
+  "main": "Main.qml",
+  "barWidget": "BarWidget.qml",
+  "desktopTitle": "realm.exe",
+  "desktopWidget": "DesktopWidget.qml",
+  "realms": ["heaven", "hell"],
+  "settings": "Settings.qml",
+  "menu": [
+    {
+      "label": "Смена измерения",
+      "icon": "starSparkle",
+      "exec": "qs -c angelos -n ipc call helper portal"
+    }
+  ]
+}

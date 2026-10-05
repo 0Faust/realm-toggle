@@ -28,11 +28,8 @@ Item {
                 Story.player.returns = root._pluginReturnSnapshot;
                 root._pluginReturnPending = false;
                 root._pluginReturnSnapshot = -1;
-                if (root.plugin) {
+                if (root.plugin)
                     root.plugin.set("realmToggleReturnPending", false);
-                    root.plugin.set("realmToggleHellEntered", false);
-                    root.plugin.set("realmToggleHellPassed", true);
-                }
                 stop();
             }
         }
@@ -58,17 +55,16 @@ Item {
     function toggle() {
         if (Angel.transition || root._pluginReturnPending)
             return;
-        if (Angel.demon) {
-            // A return is allowed only after this plugin has registered an
-            // actual trip into hell.
-            if (!(root.plugin && root.plugin.get("realmToggleHellEntered", false)))
-                return;
+        // Before the first completed Hell passage, leave realm switching
+        // to AngelOS' normal story/game rules. The plugin activates only
+        // after Story.hell.outcomes contains a real Hell outcome.
+        if (!root.hellCompletedOnce())
+            return;
+
+        if (Angel.demon)
             returnToHeaven();
-        } else {
-            if (root.plugin)
-                root.plugin.set("realmToggleHellEntered", true);
+        else
             Angel.toHell();
-        }
     }
 
     // ---- animated realm label ----

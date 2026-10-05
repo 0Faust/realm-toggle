@@ -11,6 +11,41 @@ Item {
     property string screenName
     property var widget
 
+    // Keep the AngelOS return counter untouched for plugin-triggered exits.
+    property bool _pluginReturnPending: false
+    property int _pluginReturnSnapshot: -1
+
+    Timer {
+        id: restoreReturnsTimer
+        interval: 50
+        repeat: true
+        onTriggered: {
+            if (!root._pluginReturnPending) {
+                stop();
+                return;
+            }
+            if (!Angel.demon && Angel.transition === "" && root._pluginReturnSnapshot >= 0) {
+                Story.player.returns = root._pluginReturnSnapshot;
+                root._pluginReturnPending = false;
+                root._pluginReturnSnapshot = -1;
+                if (root.plugin)
+                    root.plugin.set("realmToggleReturnPending", false);
+                stop();
+            }
+        }
+    }
+
+    function returnToHeaven() {
+        if (root._pluginReturnPending || Angel.transition)
+            return;
+        root._pluginReturnSnapshot = Story.player.returns || 0;
+        root._pluginReturnPending = true;
+        if (root.plugin)
+            root.plugin.set("realmToggleReturnPending", true);
+        Angel.getOut("stars");
+        restoreReturnsTimer.restart();
+    }
+
     // hide when the game is off (no angel/demon shown)
     readonly property bool wantVisible: Angel.shown || Angel.demon
 
@@ -18,14 +53,18 @@ Item {
     implicitHeight: col.implicitHeight
 
     function toggle() {
-        if (Angel.transition) return;
-        if (Angel.portalOpen) {
-            Angel.portal();
-        } else if (Angel.demon) {
-            Angel.getOut("stars");
-        } else {
+        if (Angel.transition || root._pluginReturnPending)
+            return;
+        // Before the first completed Hell passage, leave realm switching
+        // to AngelOS' normal story/game rules. The plugin activates only
+        // after Story.hell.outcomes contains a real Hell outcome.
+        if (!root.hellCompletedOnce())
+            return;
+
+        if (Angel.demon)
+            returnToHeaven();
+        else
             Angel.toHell();
-        }
     }
 
     // ---- animated realm label ----

@@ -12,10 +12,15 @@ Item {
     property string screenName
     property var barWindow
 
-    // The plugin keeps its own hell-cycle state and never uses AngelOS'
-    // return counter as the unlock condition.
+    // The plugin becomes active only after one real AngelOS Hell completion.
+    // It never uses or changes AngelOS' return counter as the unlock condition.
     property bool _pluginReturnPending: false
     property int _pluginReturnSnapshot: -1
+
+    function hellCompletedOnce() {
+        const outcomes = Story.hell && Story.hell.outcomes ? Story.hell.outcomes : [];
+        return outcomes.some(o => o && ["stars", "pact", "limbo"].includes(o.kind));
+    }
 
     implicitWidth: btn.implicitWidth + Theme.u * 2
     implicitHeight: Theme.u * 13
@@ -36,11 +41,8 @@ Item {
                 Story.player.returns = root._pluginReturnSnapshot;
                 root._pluginReturnPending = false;
                 root._pluginReturnSnapshot = -1;
-                if (root.plugin) {
+                if (root.plugin)
                     root.plugin.set("realmToggleReturnPending", false);
-                    root.plugin.set("realmToggleHellEntered", false);
-                    root.plugin.set("realmToggleHellPassed", true);
-                }
                 stop();
             }
         }
@@ -68,17 +70,16 @@ Item {
         if (Angel.transition || root._pluginReturnPending)
             return;
 
-        if (Angel.demon) {
-            // A return is allowed only after this plugin has registered an
-            // actual trip into hell.
-            if (!(root.plugin && root.plugin.get("realmToggleHellEntered", false)))
-                return;
+        // Before the first completed Hell passage, leave realm switching
+        // to AngelOS' normal story/game rules. The plugin activates only
+        // after Story.hell.outcomes contains a real Hell outcome.
+        if (!root.hellCompletedOnce())
+            return;
+
+        if (Angel.demon)
             returnToHeaven();
-        } else {
-            if (root.plugin)
-                root.plugin.set("realmToggleHellEntered", true);
+        else
             Angel.toHell();
-        }
     }
 
     // ---- colors & labels ----

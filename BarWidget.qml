@@ -12,21 +12,63 @@ Item {
     property string screenName
     property var barWindow
 
+    // The plugin keeps its own hell-cycle state and never uses AngelOS'
+    // return counter as the unlock condition.
+    property bool _pluginReturnPending: false
+    property int _pluginReturnSnapshot: -1
+
     implicitWidth: btn.implicitWidth + Theme.u * 2
     implicitHeight: Theme.u * 13
 
+    // Restore the AngelOS return counter only after Angel has actually
+    // completed the plugin-triggered ascent.
+    Timer {
+        id: restoreReturnsTimer
+        interval: 50
+        repeat: true
+        onTriggered: {
+            if (!root._pluginReturnPending) {
+                stop();
+                return;
+            }
+
+            if (!Angel.demon && Angel.transition === "" && root._pluginReturnSnapshot >= 0) {
+                Story.player.returns = root._pluginReturnSnapshot;
+                root._pluginReturnPending = false;
+                root._pluginReturnSnapshot = -1;
+                if (root.plugin)
+                    root.plugin.set("realmToggleReturnPending", false);
+                stop();
+            }
+        }
+    }
+
+    function returnToHeaven() {
+        if (root._pluginReturnPending || Angel.transition)
+            return;
+
+        // Snapshot the real AngelOS counter. The plugin-triggered return
+        // must leave it exactly as it was before this transition.
+        root._pluginReturnSnapshot = Story.player.returns || 0;
+        root._pluginReturnPending = true;
+        if (root.plugin)
+            root.plugin.set("realmToggleReturnPending", true);
+
+        Angel.getOut("stars");
+        restoreReturnsTimer.restart();
+    }
+
     // ---- toggle logic ----
-    // Angel.portal() works once portalOpen (returns >= 3 or Owner).
-    // Before that we call toHell() / getOut() directly — same animation, same sound.
+    // The first complete hell trip is controlled by this plugin itself.
+    // AngelOS' 3-return portal rule is not used as the plugin's unlock.
     function toggle() {
-        if (Angel.transition)
-            return;                          // already animating, skip
-        if (Angel.portalOpen) {
-            Angel.portal();
-        } else if (Angel.demon) {
-            Angel.getOut("stars");           // angel returns: light, choir
+        if (Angel.transition || root._pluginReturnPending)
+            return;
+
+        if (Angel.demon) {
+            returnToHeaven();
         } else {
-            Angel.toHell();                  // demon arrives: quake, cracks
+            Angel.toHell();
         }
     }
 
@@ -54,7 +96,7 @@ Item {
         checked: Angel.demon
         icon: Angel.demon ? "moon" : "sun"
         text: root.labelText
-        enabled: !Angel.transition
+        enabled: !Angel.transition && !root._pluginReturnPending
         onClicked: root.toggle()
 
         // subtle scale pulse when a swap starts

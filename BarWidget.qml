@@ -36,8 +36,11 @@ Item {
                 Story.player.returns = root._pluginReturnSnapshot;
                 root._pluginReturnPending = false;
                 root._pluginReturnSnapshot = -1;
-                if (root.plugin)
+                if (root.plugin) {
                     root.plugin.set("realmToggleReturnPending", false);
+                    root.plugin.set("realmToggleHellEntered", false);
+                    root.plugin.set("realmToggleHellPassed", true);
+                }
                 stop();
             }
         }
@@ -66,8 +69,14 @@ Item {
             return;
 
         if (Angel.demon) {
+            // A return is allowed only after this plugin has registered an
+            // actual trip into hell.
+            if (!(root.plugin && root.plugin.get("realmToggleHellEntered", false)))
+                return;
             returnToHeaven();
         } else {
+            if (root.plugin)
+                root.plugin.set("realmToggleHellEntered", true);
             Angel.toHell();
         }
     }

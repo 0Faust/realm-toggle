@@ -15,6 +15,11 @@ Item {
     property bool _pluginReturnPending: false
     property int _pluginReturnSnapshot: -1
 
+    function hellCompletedOnce() {
+        const outcomes = Story.hell && Story.hell.outcomes ? Story.hell.outcomes : [];
+        return outcomes.some(o => o && ["stars", "pact", "limbo"].includes(o.kind));
+    }
+
     Timer {
         id: restoreReturnsTimer
         interval: 50
